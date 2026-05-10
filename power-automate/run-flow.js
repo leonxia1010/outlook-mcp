@@ -23,6 +23,16 @@ async function handleRunFlow(args) {
     };
   }
 
+  const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!GUID_RE.test(environmentId) || !GUID_RE.test(flowId)) {
+    return {
+      content: [{
+        type: "text",
+        text: "environmentId and flowId must be valid GUIDs (e.g., '00000000-0000-0000-0000-000000000000')."
+      }]
+    };
+  }
+
   try {
     const accessToken = getFlowAccessToken();
 

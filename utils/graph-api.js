@@ -74,15 +74,19 @@ async function callGraphAPI(accessToken, method, path, data = null, queryParams 
       console.error(`Full URL: ${finalUrl}`);
     }
     
+    const isRawBody = data != null
+      && (Buffer.isBuffer(data) || typeof data === 'string')
+      && (method === 'POST' || method === 'PATCH' || method === 'PUT');
+
     return new Promise((resolve, reject) => {
       const options = {
         method: method,
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
+          'Content-Type': isRawBody ? 'application/octet-stream' : 'application/json'
         }
       };
-      
+
       const req = https.request(finalUrl, options, (res) => {
         let responseData = '';
         
@@ -112,8 +116,8 @@ async function callGraphAPI(accessToken, method, path, data = null, queryParams 
         reject(new Error(`Network error during API call: ${error.message}`));
       });
       
-      if (data && (method === 'POST' || method === 'PATCH' || method === 'PUT')) {
-        req.write(JSON.stringify(data));
+      if (data != null && (method === 'POST' || method === 'PATCH' || method === 'PUT')) {
+        req.write(isRawBody ? data : JSON.stringify(data));
       }
       
       req.end();

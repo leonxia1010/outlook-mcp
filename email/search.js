@@ -107,13 +107,13 @@ async function progressiveSearch(endpoint, accessToken, searchTerms, filterTerms
         // Build KQL terms for search
         const kqlParts = [];
         
-        // Add the search term in the appropriate KQL syntax
+        // Add the search term in the appropriate KQL syntax — escape user
+        // input so backslashes/quotes can't break out of the outer `"..."`
+        // KQL string assembled below.
         if (term === 'query') {
-          // General query doesn't need a prefix
-          kqlParts.push(searchTerms[term]);
+          kqlParts.push(escapeKqlValue(searchTerms[term]));
         } else {
-          // Specific field searches use field:value syntax
-          kqlParts.push(`${term}:${searchTerms[term]}`);
+          kqlParts.push(`${term}:"${escapeKqlValue(searchTerms[term])}"`);
         }
         
         // Add boolean filters as KQL (can't use $filter with $search)
@@ -180,6 +180,14 @@ async function progressiveSearch(endpoint, accessToken, searchTerms, filterTerms
 }
 
 /**
+ * Escape a value for safe embedding in a KQL double-quoted string.
+ * KQL double-quoted phrases use \" to escape quote and \\ to escape backslash.
+ */
+function escapeKqlValue(value) {
+  return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+/**
  * Build search parameters from search terms and filter terms
  * @param {object} searchTerms - Search terms (query, from, to, subject)
  * @param {object} filterTerms - Filter terms (hasAttachments, unreadOnly)
@@ -201,15 +209,15 @@ function buildSearchParams(searchTerms, filterTerms, count) {
   }
   
   if (searchTerms.subject) {
-    kqlTerms.push(`subject:\"${searchTerms.subject}\"`);
+    kqlTerms.push(`subject:"${escapeKqlValue(searchTerms.subject)}"`);
   }
 
   if (searchTerms.from) {
-    kqlTerms.push(`from:\"${searchTerms.from}\"`);
+    kqlTerms.push(`from:"${escapeKqlValue(searchTerms.from)}"`);
   }
 
   if (searchTerms.to) {
-    kqlTerms.push(`to:\"${searchTerms.to}\"`);
+    kqlTerms.push(`to:"${escapeKqlValue(searchTerms.to)}"`);
   }
   
   // Add $search if we have any search terms

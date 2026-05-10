@@ -56,7 +56,8 @@ async function handleUpload(args) {
       '@microsoft.graph.conflictBehavior': conflictBehavior
     };
 
-    const response = await callGraphAPI(accessToken, 'PUT', endpoint, content, queryParams);
+    const body = Buffer.isBuffer(content) ? content : Buffer.from(content);
+    const response = await callGraphAPI(accessToken, 'PUT', endpoint, body, queryParams);
 
     if (!response || !response.id) {
       return {

@@ -192,6 +192,10 @@ MS_CLIENT_ID=your-application-client-id-here
 MS_CLIENT_SECRET=your-client-secret-VALUE-here
 MS_TENANT_ID=your-tenant-id-here
 USE_TEST_MODE=false
+
+# Optional: override OAuth scopes (space-separated). Defaults cover email + calendar.
+# Add Files.ReadWrite.All for OneDrive, MailboxSettings.ReadWrite for inbox rules.
+MS_SCOPES=offline_access User.Read Mail.Read Mail.ReadWrite Mail.Send Calendars.Read Calendars.ReadWrite Contacts.Read Files.ReadWrite.All MailboxSettings.ReadWrite
 ```
 
 **Important Notes:**
@@ -199,6 +203,7 @@ USE_TEST_MODE=false
 - Set `MS_TENANT_ID` for single-tenant apps to avoid `/common` endpoint errors
 - For Claude Desktop config, you'll use `OUTLOOK_CLIENT_ID` and `OUTLOOK_CLIENT_SECRET`
 - Always use the client secret **VALUE**, never the Secret ID
+- `MS_SCOPES` is honored by both `outlook-auth-server.js` and `auth/token-storage.js`. Re-authenticate after changing it.
 
 ### 2. Claude Desktop Configuration
 

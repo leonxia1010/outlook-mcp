@@ -91,11 +91,13 @@ A comprehensive MCP (Model Context Protocol) server that connects Claude with Mi
 | `accept-event` | Accept event invitation |
 | `decline-event` | Decline event invitation |
 | `delete-event` | Delete calendar event |
-| `list-folders` | List mail folders |
+| `list-folders` | List mail folders (recursive, any depth) |
 | `create-folder` | Create mail folder |
 | `move-emails` | Move emails between folders |
 | `list-rules` | List inbox rules |
 | `create-rule` | Create inbox rule |
+
+> **Folder paths:** `list-emails`, `search-emails`, `move-emails`, `create-folder` and `create-rule` accept nested-folder paths via `'Parent/Child/Grandchild'` syntax (e.g. `Inbox/Projects/HelloCity`). The first segment may be a well-known name (`Inbox`, `Drafts`, `Sent`, `Deleted`, `Junk`, `Archive`). Leading/trailing/double slashes and surrounding whitespace are tolerated. Folder names containing `/` cannot be addressed via path syntax — use a single-segment lookup.
 
 ### OneDrive
 | Tool | Description |

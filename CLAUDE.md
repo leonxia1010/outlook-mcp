@@ -45,6 +45,17 @@ Each module exports tools and handlers:
 - **Flow API Client**: `power-automate/flow-api.js` handles Power Automate API calls
 - **Test Mode**: Mock data responses when `USE_TEST_MODE=true`
 - **Modular Tools**: Each module exports tools array that gets combined in main server
+- **Folder name resolution**: `email/folder-utils.js` resolves folder name parameters
+  (used by `list-emails`, `search-emails`, `move-emails`, `create-folder`, `create-rule`)
+  with nested-path support via `'Parent/Child/Grandchild'` syntax. Path segments are
+  resolved one at a time against `me/mailFolders/{parentId}/childFolders`. The first
+  segment may match a well-known folder (`Inbox`, `Drafts`, `Sent`, `Deleted`, `Junk`,
+  `Archive`, case-insensitive) via `WELL_KNOWN_FOLDER_IDS`. All `$filter` literals run
+  through `escapeODataLiteral` (doubles single quotes). Single-segment lookups preserve
+  the old top-level-only behaviour. `resolveFolderPath` returns `null` on miss — no
+  silent fallback to inbox; callers are expected to handle null and surface a path-
+  syntax hint. `fetchAllFoldersDeep` BFS-walks the tree to `maxDepth=10` and is reused
+  by `list-folders`.
 
 ## Authentication
 

@@ -80,7 +80,7 @@ async function createMailFolder(accessToken, folderName, parentFolderName) {
       if (!parentId) {
         return {
           success: false,
-          message: `Parent folder "${parentFolderName}" not found. Please specify a valid parent folder or leave it blank to create at the root level.`
+          message: `Parent folder "${parentFolderName}" not found. For nested folders use 'Parent/Child' syntax (e.g. "Inbox/Projects"). Leave blank to create at the root level.`
         };
       }
       

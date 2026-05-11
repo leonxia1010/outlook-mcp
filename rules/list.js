@@ -124,33 +124,77 @@ function formatRulesList(rules, includeDetails) {
  */
 function formatRuleConditions(rule) {
   const conditions = [];
-  
-  // From addresses
-  if (rule.conditions?.fromAddresses?.length > 0) {
-    const senders = rule.conditions.fromAddresses.map(addr => addr.emailAddress.address).join(', ');
+  const c = rule.conditions;
+  if (!c) {
+    return '';
+  }
+
+  if (c.fromAddresses?.length > 0) {
+    const senders = c.fromAddresses.map(addr => addr.emailAddress.address).join(', ');
     conditions.push(`From: ${senders}`);
   }
-  
-  // Subject contains
-  if (rule.conditions?.subjectContains?.length > 0) {
-    conditions.push(`Subject contains: "${rule.conditions.subjectContains.join(', ')}"`);
+
+  if (c.senderContains?.length > 0) {
+    conditions.push(`Sender contains: "${c.senderContains.join(', ')}"`);
   }
-  
-  // Contains body text
-  if (rule.conditions?.bodyContains?.length > 0) {
-    conditions.push(`Body contains: "${rule.conditions.bodyContains.join(', ')}"`);
+
+  if (c.sentToAddresses?.length > 0) {
+    const recipients = c.sentToAddresses.map(addr => addr.emailAddress.address).join(', ');
+    conditions.push(`Sent to: ${recipients}`);
   }
-  
-  // Has attachment
-  if (rule.conditions?.hasAttachment === true) {
-    conditions.push('Has attachment');
+
+  if (c.recipientContains?.length > 0) {
+    conditions.push(`Recipient contains: "${c.recipientContains.join(', ')}"`);
   }
-  
-  // Importance
-  if (rule.conditions?.importance) {
-    conditions.push(`Importance: ${rule.conditions.importance}`);
+
+  if (c.subjectContains?.length > 0) {
+    conditions.push(`Subject contains: "${c.subjectContains.join(', ')}"`);
   }
-  
+
+  if (c.bodyContains?.length > 0) {
+    conditions.push(`Body contains: "${c.bodyContains.join(', ')}"`);
+  }
+
+  if (c.bodyOrSubjectContains?.length > 0) {
+    conditions.push(`Body or subject contains: "${c.bodyOrSubjectContains.join(', ')}"`);
+  }
+
+  if (c.categories?.length > 0) {
+    conditions.push(`Categories: ${c.categories.join(', ')}`);
+  }
+
+  if (c.sentToMe === true) {
+    conditions.push('Sent to me');
+  }
+
+  if (c.sentCcMe === true) {
+    conditions.push("CC'd to me");
+  }
+
+  if (c.sentOnlyToMe === true) {
+    conditions.push('Sent only to me');
+  }
+
+  if (c.sentToOrCcMe === true) {
+    conditions.push('Sent to or CC me');
+  }
+
+  if (c.isMeetingRequest === true) {
+    conditions.push('Is meeting request');
+  }
+
+  if (c.hasAttachments === true) {
+    conditions.push('Has attachments');
+  }
+
+  if (c.importance) {
+    conditions.push(`Importance: ${c.importance}`);
+  }
+
+  if (c.sensitivity) {
+    conditions.push(`Sensitivity: ${c.sensitivity}`);
+  }
+
   return conditions.join('; ');
 }
 

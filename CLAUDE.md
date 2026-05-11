@@ -36,7 +36,11 @@ Each module exports tools and handlers:
 - `utils/` - Shared utilities including Graph API client and OData helpers
 
 ### Key Components
-- **Token Management**: Tokens stored in `~/.outlook-mcp-tokens.json` (both Graph and Flow tokens)
+- **Token Management**: Tokens stored in `~/.outlook-mcp-tokens.json` (both Graph and Flow tokens).
+  Main path is `auth/token-storage.js` (class, stats the file mtime each `getTokens()` so external
+  writes from `outlook-auth-server.js` are picked up without restarting MCP).
+  `auth/token-manager.js` is a parallel function-based implementation used only by
+  `power-automate/*` — do not reuse it elsewhere, it bypasses the mtime detection.
 - **Graph API Client**: `utils/graph-api.js` handles Microsoft Graph API calls (Outlook, OneDrive)
 - **Flow API Client**: `power-automate/flow-api.js` handles Power Automate API calls
 - **Test Mode**: Mock data responses when `USE_TEST_MODE=true`
@@ -67,6 +71,10 @@ Each module exports tools and handlers:
 - **For .env file**: Use `MS_CLIENT_ID` and `MS_CLIENT_SECRET`
 - **For Claude Desktop config**: Use `OUTLOOK_CLIENT_ID` and `OUTLOOK_CLIENT_SECRET`
 - **Important**: Always use the client secret VALUE from Azure, not the Secret ID
+- **`MS_SCOPES`** (optional, space-separated): override OAuth scopes when the default
+  set doesn't cover the tools you need. Add `Files.ReadWrite.All` for OneDrive,
+  `MailboxSettings.ReadWrite` for inbox rules. Honored by both `outlook-auth-server.js`
+  and `auth/token-storage.js`. Re-authenticate after changing.
 
 ### Config Constants
 - `GRAPH_API_ENDPOINT`: `https://graph.microsoft.com/v1.0/`
@@ -85,6 +93,10 @@ Each module exports tools and handlers:
 Set `USE_TEST_MODE=true` to use mock data instead of real API calls. Mock responses defined in:
 - `utils/mock-data.js` - Graph API mocks
 - `power-automate/flow-api.js` - Flow API mocks (inline)
+
+**Known test failure (not a regression):** `test/auth/token-storage.test.js:50` expects a
+different warn message than what `auth/token-storage.js:32` currently prints. Predates the
+mtime work, ignore.
 
 ## Error Handling
 

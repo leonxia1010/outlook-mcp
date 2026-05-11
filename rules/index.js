@@ -127,7 +127,7 @@ const rulesTools = [
         },
         moveToFolder: {
           type: "string",
-          description: "Name of the folder to move matching emails to"
+          description: "Name of the folder to move matching emails to. Supports nested paths like 'Inbox/Projects/Archive'."
         },
         markAsRead: {
           type: "boolean", 

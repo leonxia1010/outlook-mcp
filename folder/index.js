@@ -38,7 +38,7 @@ const folderTools = [
         },
         parentFolder: {
           type: "string",
-          description: "Optional parent folder name (default is root)"
+          description: "Optional parent folder name (default is root). Supports nested paths like 'Inbox/Projects'."
         }
       },
       required: ["name"]
@@ -57,11 +57,7 @@ const folderTools = [
         },
         targetFolder: {
           type: "string",
-          description: "Name of the folder to move emails to"
-        },
-        sourceFolder: {
-          type: "string",
-          description: "Optional name of the source folder (default is inbox)"
+          description: "Name of the folder to move emails to. Supports nested paths like 'Inbox/Projects/HelloCity'."
         }
       },
       required: ["emailIds", "targetFolder"]

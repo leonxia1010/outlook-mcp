@@ -27,8 +27,18 @@ async function handleSearchEmails(args) {
     
     // Resolve the folder path
     const endpoint = await resolveFolderPath(accessToken, folder);
+
+    if (!endpoint) {
+      return {
+        content: [{
+          type: "text",
+          text: `Folder "${folder}" not found. For nested folders use 'Parent/Child' syntax (e.g. "Inbox/Projects/HelloCity").`
+        }]
+      };
+    }
+
     console.error(`Using endpoint: ${endpoint} for folder: ${folder}`);
-    
+
     // Execute progressive search with pagination
     const response = await progressiveSearch(
       endpoint, 

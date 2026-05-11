@@ -21,7 +21,16 @@ async function handleListEmails(args) {
 
     // Resolve the folder path
     const endpoint = await resolveFolderPath(accessToken, folder);
-    
+
+    if (!endpoint) {
+      return {
+        content: [{
+          type: "text",
+          text: `Folder "${folder}" not found. For nested folders use 'Parent/Child' syntax (e.g. "Inbox/Projects/HelloCity").`
+        }]
+      };
+    }
+
     // Add query parameters
     const queryParams = {
       $top: Math.min(50, requestedCount), // Use 50 per page for efficiency

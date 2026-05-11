@@ -19,7 +19,7 @@ const emailTools = [
       properties: {
         folder: {
           type: "string",
-          description: "Email folder to list (e.g., 'inbox', 'sent', 'drafts', default: 'inbox')"
+          description: "Email folder to list (e.g., 'inbox', 'sent', 'drafts', default: 'inbox'). Supports nested paths like 'Inbox/Projects/HelloCity'."
         },
         count: {
           type: "number",
@@ -42,7 +42,7 @@ const emailTools = [
         },
         folder: {
           type: "string",
-          description: "Email folder to search in (default: 'inbox')"
+          description: "Email folder to search in (default: 'inbox'). Supports nested paths like 'Inbox/Projects/HelloCity'."
         },
         from: {
           type: "string",

@@ -201,7 +201,7 @@ async function createInboxRule(accessToken, ruleOptions) {
         if (!folderId) {
           return {
             success: false,
-            message: `Target folder "${moveToFolder}" not found. Please specify a valid folder name.`
+            message: `Target folder "${moveToFolder}" not found. For nested folders use 'Parent/Child' syntax (e.g. "Inbox/Projects/Archive").`
           };
         }
         

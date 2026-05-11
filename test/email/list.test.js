@@ -192,6 +192,17 @@ describe('handleListEmails', () => {
 
       expect(result.content[0].text).toBe('Error listing emails: Folder resolution failed');
     });
+
+    test('should surface path-syntax hint when folder is not found', async () => {
+      ensureAuthenticated.mockResolvedValue(mockAccessToken);
+      resolveFolderPath.mockResolvedValue(null);
+
+      const result = await handleListEmails({ folder: 'Inbox/Missing' });
+
+      expect(result.content[0].text).toContain('Folder "Inbox/Missing" not found');
+      expect(result.content[0].text).toContain("'Parent/Child' syntax");
+      expect(callGraphAPIPaginated).not.toHaveBeenCalled();
+    });
   });
 
   describe('inbox endpoint verification', () => {

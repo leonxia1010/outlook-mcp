@@ -1,7 +1,7 @@
 /**
  * List folders functionality
  */
-const { callGraphAPI } = require('../utils/graph-api');
+const { fetchAllFoldersDeep } = require('../email/folder-utils');
 const { ensureAuthenticated } = require('../auth');
 
 /**
@@ -12,27 +12,27 @@ const { ensureAuthenticated } = require('../auth');
 async function handleListFolders(args) {
   const includeItemCounts = args.includeItemCounts === true;
   const includeChildren = args.includeChildren === true;
-  
+
   try {
-    // Get access token
     const accessToken = await ensureAuthenticated();
-    
-    // Get all mail folders
-    const folders = await getAllFoldersHierarchy(accessToken, includeItemCounts);
-    
-    // If including children, format as hierarchy
+
+    const selectFields = includeItemCounts
+      ? 'id,displayName,parentFolderId,childFolderCount,totalItemCount,unreadItemCount'
+      : 'id,displayName,parentFolderId,childFolderCount';
+
+    const folders = await fetchAllFoldersDeep(accessToken, selectFields);
+
     if (includeChildren) {
       return {
-        content: [{ 
-          type: "text", 
+        content: [{
+          type: "text",
           text: formatFolderHierarchy(folders, includeItemCounts)
         }]
       };
     } else {
-      // Otherwise, format as flat list
       return {
-        content: [{ 
-          type: "text", 
+        content: [{
+          type: "text",
           text: formatFolderList(folders, includeItemCounts)
         }]
       };
@@ -40,91 +40,19 @@ async function handleListFolders(args) {
   } catch (error) {
     if (error.message === 'Authentication required') {
       return {
-        content: [{ 
-          type: "text", 
+        content: [{
+          type: "text",
           text: "Authentication required. Please use the 'authenticate' tool first."
         }]
       };
     }
-    
+
     return {
-      content: [{ 
-        type: "text", 
+      content: [{
+        type: "text",
         text: `Error listing folders: ${error.message}`
       }]
     };
-  }
-}
-
-/**
- * Get all mail folders with hierarchy information
- * @param {string} accessToken - Access token
- * @param {boolean} includeItemCounts - Include item counts in response
- * @returns {Promise<Array>} - Array of folder objects with hierarchy
- */
-async function getAllFoldersHierarchy(accessToken, includeItemCounts) {
-  try {
-    // Determine select fields based on whether to include counts
-    const selectFields = includeItemCounts
-      ? 'id,displayName,parentFolderId,childFolderCount,totalItemCount,unreadItemCount'
-      : 'id,displayName,parentFolderId,childFolderCount';
-    
-    // Get all mail folders
-    const response = await callGraphAPI(
-      accessToken,
-      'GET',
-      'me/mailFolders',
-      null,
-      { 
-        $top: 100,
-        $select: selectFields
-      }
-    );
-    
-    if (!response.value) {
-      return [];
-    }
-    
-    // Get child folders for folders with children
-    const foldersWithChildren = response.value.filter(f => f.childFolderCount > 0);
-    
-    const childFolderPromises = foldersWithChildren.map(async (folder) => {
-      try {
-        const childResponse = await callGraphAPI(
-          accessToken,
-          'GET',
-          `me/mailFolders/${folder.id}/childFolders`,
-          null,
-          { $select: selectFields }
-        );
-        
-        // Add parent folder info to each child
-        const childFolders = childResponse.value || [];
-        childFolders.forEach(child => {
-          child.parentFolder = folder.displayName;
-        });
-        
-        return childFolders;
-      } catch (error) {
-        console.error(`Error getting child folders for "${folder.displayName}": ${error.message}`);
-        return [];
-      }
-    });
-    
-    const childFolders = await Promise.all(childFolderPromises);
-    const allChildFolders = childFolders.flat();
-    
-    // Add top-level flag to parent folders
-    const topLevelFolders = response.value.map(folder => ({
-      ...folder,
-      isTopLevel: true
-    }));
-    
-    // Combine all folders
-    return [...topLevelFolders, ...allChildFolders];
-  } catch (error) {
-    console.error(`Error getting all folders: ${error.message}`);
-    throw error;
   }
 }
 

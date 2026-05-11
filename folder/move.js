@@ -13,8 +13,7 @@ const { getFolderIdByName } = require('../email/folder-utils');
 async function handleMoveEmails(args) {
   const emailIds = args.emailIds || '';
   const targetFolder = args.targetFolder || '';
-  const sourceFolder = args.sourceFolder || '';
-  
+
   if (!emailIds) {
     return {
       content: [{ 
@@ -50,8 +49,8 @@ async function handleMoveEmails(args) {
     }
     
     // Move emails
-    const result = await moveEmailsToFolder(accessToken, ids, targetFolder, sourceFolder);
-    
+    const result = await moveEmailsToFolder(accessToken, ids, targetFolder);
+
     return {
       content: [{ 
         type: "text", 
@@ -81,18 +80,17 @@ async function handleMoveEmails(args) {
  * Move emails to a folder
  * @param {string} accessToken - Access token
  * @param {Array<string>} emailIds - Array of email IDs to move
- * @param {string} targetFolderName - Name of the target folder
- * @param {string} sourceFolderName - Name of the source folder (optional)
+ * @param {string} targetFolderName - Name of the target folder (supports nested paths)
  * @returns {Promise<object>} - Result object with status and message
  */
-async function moveEmailsToFolder(accessToken, emailIds, targetFolderName, sourceFolderName) {
+async function moveEmailsToFolder(accessToken, emailIds, targetFolderName) {
   try {
     // Get the target folder ID
     const targetFolderId = await getFolderIdByName(accessToken, targetFolderName);
     if (!targetFolderId) {
       return {
         success: false,
-        message: `Target folder "${targetFolderName}" not found. Please specify a valid folder name.`
+        message: `Target folder "${targetFolderName}" not found. For nested folders use 'Parent/Child' syntax (e.g. "Inbox/Projects/HelloCity").`
       };
     }
     

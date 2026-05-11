@@ -24,6 +24,7 @@ class TokenStorage {
       ...config // Allow overriding default config
     };
     this.tokens = null;
+    this._fileMtimeMs = null;
     this._loadPromise = null;
     this._refreshPromise = null;
 
@@ -34,8 +35,10 @@ class TokenStorage {
 
   async _loadTokensFromFile() {
     try {
+      const mtimeMs = await this._readMtimeMs();
       const tokenData = await fs.readFile(this.config.tokenStorePath, 'utf8');
       this.tokens = JSON.parse(tokenData);
+      this._fileMtimeMs = mtimeMs;
       console.log('Tokens loaded from file.');
       return this.tokens;
     } catch (error) {
@@ -45,6 +48,19 @@ class TokenStorage {
         console.error('Error loading token cache:', error);
       }
       this.tokens = null;
+      this._fileMtimeMs = null;
+      return null;
+    }
+  }
+
+  async _readMtimeMs() {
+    try {
+      const stat = await fs.stat(this.config.tokenStorePath);
+      return stat && typeof stat.mtimeMs === 'number' ? stat.mtimeMs : null;
+    } catch (error) {
+      if (error && error.code !== 'ENOENT') {
+        console.error('Error stating token file:', error);
+      }
       return null;
     }
   }
@@ -56,21 +72,24 @@ class TokenStorage {
     }
     try {
       await fs.writeFile(this.config.tokenStorePath, JSON.stringify(this.tokens, null, 2), { mode: 0o600 });
+      this._fileMtimeMs = await this._readMtimeMs();
       console.log('Tokens saved successfully.');
-      // return true; // No longer returning boolean, will throw on error.
     } catch (error) {
       console.error('Error saving token cache:', error);
-      throw error; // Propagate the error
+      throw error;
     }
   }
 
   async getTokens() {
-    if (this.tokens) {
+    const currentMtimeMs = await this._readMtimeMs();
+
+    if (this.tokens && currentMtimeMs === this._fileMtimeMs) {
       return this.tokens;
     }
+
     if (!this._loadPromise) {
         this._loadPromise = this._loadTokensFromFile().finally(() => {
-            this._loadPromise = null; // Reset promise once completed
+            this._loadPromise = null;
         });
     }
     return this._loadPromise;
@@ -267,6 +286,7 @@ class TokenStorage {
   // Utility to clear tokens, e.g., for logout or forcing re-auth
   async clearTokens() {
     this.tokens = null;
+    this._fileMtimeMs = null;
     try {
       await fs.unlink(this.config.tokenStorePath);
       console.log('Token file deleted successfully.');

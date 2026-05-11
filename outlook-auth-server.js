@@ -43,7 +43,7 @@ const AUTH_CONFIG = {
   tenantId: process.env.MS_TENANT_ID || 'common',
   authorityHost: (process.env.MS_AUTHORITY_HOST || 'https://login.microsoftonline.com').replace(/\/+$/, ''),
   redirectUri: 'http://localhost:3333/auth/callback',
-  scopes: [
+  scopes: (process.env.MS_SCOPES || [
     'offline_access',
     'User.Read',
     'Mail.Read',
@@ -51,7 +51,7 @@ const AUTH_CONFIG = {
     'Calendars.Read',
     'Calendars.ReadWrite',
     'Contacts.Read'
-  ],
+  ].join(' ')).split(/\s+/).filter(Boolean),
   tokenStorePath: path.join(process.env.HOME || process.env.USERPROFILE, '.outlook-mcp-tokens.json')
 };
 

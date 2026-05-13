@@ -3,6 +3,7 @@
  */
 const { callGraphAPI } = require('../utils/graph-api');
 const { ensureAuthenticated } = require('../auth');
+const { fetchAllFoldersDeep } = require('../email/folder-utils');
 
 /**
  * List rules handler
@@ -18,9 +19,19 @@ async function handleListRules(args) {
     
     // Get all inbox rules
     const rules = await getInboxRules(accessToken);
-    
+
+    // Build folder id → path map for readable action display
+    let folderMap = new Map();
+    if (includeDetails) {
+      try {
+        folderMap = await buildFolderIdToPathMap(accessToken);
+      } catch (err) {
+        console.error(`Failed to build folder map: ${err.message}`);
+      }
+    }
+
     // Format the rules based on detail level
-    const formattedRules = formatRulesList(rules, includeDetails);
+    const formattedRules = formatRulesList(rules, includeDetails, folderMap);
     
     return {
       content: [{ 
@@ -74,7 +85,7 @@ async function getInboxRules(accessToken) {
  * @param {boolean} includeDetails - Whether to include detailed conditions and actions
  * @returns {string} - Formatted rules list
  */
-function formatRulesList(rules, includeDetails) {
+function formatRulesList(rules, includeDetails, folderMap) {
   if (!rules || rules.length === 0) {
     return "No inbox rules found.\n\nTip: You can create rules using the 'create-rule' tool. Rules are processed in order of their sequence number (lower numbers are processed first).";
   }
@@ -98,7 +109,7 @@ function formatRulesList(rules, includeDetails) {
       }
       
       // Format actions
-      const actions = formatRuleActions(rule);
+      const actions = formatRuleActions(rule, folderMap);
       if (actions) {
         ruleText += `\n   Actions: ${actions}`;
       }
@@ -203,17 +214,18 @@ function formatRuleConditions(rule) {
  * @param {object} rule - Rule object
  * @returns {string} - Formatted actions
  */
-function formatRuleActions(rule) {
+function formatRuleActions(rule, folderMap) {
   const actions = [];
-  
+  const resolveName = (id) => (folderMap && folderMap.get(id)) || id;
+
   // Move to folder
   if (rule.actions?.moveToFolder) {
-    actions.push(`Move to folder: ${rule.actions.moveToFolder}`);
+    actions.push(`Move to folder: ${resolveName(rule.actions.moveToFolder)}`);
   }
-  
+
   // Copy to folder
   if (rule.actions?.copyToFolder) {
-    actions.push(`Copy to folder: ${rule.actions.copyToFolder}`);
+    actions.push(`Copy to folder: ${resolveName(rule.actions.copyToFolder)}`);
   }
   
   // Mark as read
@@ -238,6 +250,40 @@ function formatRuleActions(rule) {
   }
   
   return actions.join('; ');
+}
+
+/**
+ * Build a map from folder id → full display path (e.g. "Inbox/Finance/BOC").
+ * Uses fetchAllFoldersDeep to walk the whole tree, then reconstructs paths
+ * by chasing parentFolderId upwards.
+ */
+async function buildFolderIdToPathMap(accessToken) {
+  const folders = await fetchAllFoldersDeep(
+    accessToken,
+    'id,displayName,parentFolderId,childFolderCount'
+  );
+
+  const byId = new Map();
+  folders.forEach(f => byId.set(f.id, f));
+
+  const pathCache = new Map();
+
+  function resolve(id) {
+    if (pathCache.has(id)) return pathCache.get(id);
+    const f = byId.get(id);
+    if (!f) return null;
+    if (f.isTopLevel || !f.parentFolderId) {
+      pathCache.set(id, f.displayName);
+      return f.displayName;
+    }
+    const parentPath = resolve(f.parentFolderId);
+    const path = parentPath ? `${parentPath}/${f.displayName}` : f.displayName;
+    pathCache.set(id, path);
+    return path;
+  }
+
+  folders.forEach(f => resolve(f.id));
+  return pathCache;
 }
 
 module.exports = {

@@ -8,6 +8,7 @@ jest.mock('fs', () => ({
   promises: {
     readFile: jest.fn(),
     writeFile: jest.fn(),
+    stat: jest.fn(),
     unlink: jest.fn(),
   }
 }));
@@ -30,6 +31,7 @@ describe('TokenStorage', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
+    fs.stat.mockResolvedValue({ mtimeMs: 1000 });
     tokenStorage = new TokenStorage(baseConfig);
     // Ensure tokens are null at the start of each test that doesn't mock readFile
     tokenStorage.tokens = null;
@@ -47,7 +49,7 @@ describe('TokenStorage', () => {
     it('should warn if client ID or secret is missing', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
       new TokenStorage({ ...baseConfig, clientId: null });
-      expect(consoleWarnSpy).toHaveBeenCalledWith("TokenStorage: MS_CLIENT_ID or MS_CLIENT_SECRET is not configured. Token operations might fail.");
+      expect(consoleWarnSpy).toHaveBeenCalledWith("TokenStorage: Client ID or Secret is not configured (checked MS_CLIENT_ID/OUTLOOK_CLIENT_ID). Token refresh will fail.");
       consoleWarnSpy.mockRestore();
     });
   });
@@ -112,9 +114,27 @@ describe('TokenStorage', () => {
   describe('getTokens', () => {
     it('should return cached tokens if available', async () => {
       tokenStorage.tokens = { access_token: 'cached_token' };
+      tokenStorage._fileMtimeMs = 1000;
       const tokens = await tokenStorage.getTokens();
       expect(tokens).toEqual({ access_token: 'cached_token' });
       expect(fs.readFile).not.toHaveBeenCalled();
+    });
+
+    it('should reload cached tokens when token file mtime changes', async () => {
+      tokenStorage.tokens = { access_token: 'cached_token' };
+      tokenStorage._fileMtimeMs = 1000;
+      const updatedTokens = { access_token: 'externally_updated_token' };
+      fs.stat
+        .mockResolvedValueOnce({ mtimeMs: 2000 })
+        .mockResolvedValueOnce({ mtimeMs: 2000 });
+      fs.readFile.mockResolvedValue(JSON.stringify(updatedTokens));
+
+      const tokens = await tokenStorage.getTokens();
+
+      expect(tokens).toEqual(updatedTokens);
+      expect(tokenStorage.tokens).toEqual(updatedTokens);
+      expect(tokenStorage._fileMtimeMs).toBe(2000);
+      expect(fs.readFile).toHaveBeenCalledTimes(1);
     });
 
     it('should load tokens from file if not cached', async () => {

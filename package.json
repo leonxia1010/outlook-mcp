@@ -12,7 +12,8 @@
     "auth-server": "node outlook-auth-server.js",
     "test-mode": "USE_TEST_MODE=true node index.js",
     "inspect": "npx @modelcontextprotocol/inspector node index.js",
-    "test": "jest"
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "claude",
@@ -39,5 +40,19 @@
   },
   "engines": {
     "node": ">=14.0.0"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!test/**",
+      "!coverage/**",
+      "!node_modules/**",
+      "!scripts/personal/**",
+      "!test-*.js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/coverage/"
+    ]
   }
 }

@@ -27,6 +27,13 @@ yarn-error.log*
 # Claude Code local settings
 .claude/settings.local.json
 
+# Local agent/tool state
+.codex/
+.serena/
+
+# Test artifacts
+coverage/
+
 # OS specific files
 .DS_Store
 Thumbs.db

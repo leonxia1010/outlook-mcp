@@ -215,7 +215,7 @@ function buildSearchParams(searchTerms, filterTerms, count) {
   
   if (searchTerms.query) {
     // General query doesn't need a prefix
-    kqlTerms.push(searchTerms.query);
+    kqlTerms.push(escapeKqlValue(searchTerms.query));
   }
   
   if (searchTerms.subject) {

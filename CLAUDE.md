@@ -105,10 +105,6 @@ Set `USE_TEST_MODE=true` to use mock data instead of real API calls. Mock respon
 - `utils/mock-data.js` - Graph API mocks
 - `power-automate/flow-api.js` - Flow API mocks (inline)
 
-**Known test failure (not a regression):** `test/auth/token-storage.test.js:50` expects a
-different warn message than what `auth/token-storage.js:32` currently prints. Predates the
-mtime work, ignore.
-
 ## Error Handling
 
 - Graph API auth failures: "UNAUTHORIZED" error

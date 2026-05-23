@@ -3,6 +3,7 @@
  */
 const config = require('../config');
 const tokenManager = require('./token-manager');
+const tokenStorage = require('./token-storage-instance');
 
 /**
  * About tool handler
@@ -54,25 +55,10 @@ async function handleAuthenticate(args) {
  * @returns {object} - MCP response
  */
 async function handleCheckAuthStatus() {
-  console.error('[CHECK-AUTH-STATUS] Starting authentication status check');
-  
-  const tokens = tokenManager.loadTokenCache();
-  
-  console.error(`[CHECK-AUTH-STATUS] Tokens loaded: ${tokens ? 'YES' : 'NO'}`);
-  
-  if (!tokens || !tokens.access_token) {
-    console.error('[CHECK-AUTH-STATUS] No valid access token found');
-    return {
-      content: [{ type: "text", text: "Not authenticated" }]
-    };
-  }
-  
-  console.error('[CHECK-AUTH-STATUS] Access token present');
-  console.error(`[CHECK-AUTH-STATUS] Token expires at: ${tokens.expires_at}`);
-  console.error(`[CHECK-AUTH-STATUS] Current time: ${Date.now()}`);
-  
+  const accessToken = await tokenStorage.getValidAccessToken();
+
   return {
-    content: [{ type: "text", text: "Authenticated and ready" }]
+    content: [{ type: "text", text: accessToken ? "Authenticated and ready" : "Not authenticated" }]
   };
 }
 

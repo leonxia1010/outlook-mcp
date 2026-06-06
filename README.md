@@ -17,8 +17,10 @@ A comprehensive MCP (Model Context Protocol) server that connects Claude with Mi
 ├── config.js                # Configuration settings
 ├── auth/                    # Authentication modules
 │   ├── index.js             # Authentication exports
-│   ├── token-manager.js     # Token storage and refresh (Graph + Flow)
-│   └── tools.js             # Auth-related tools
+│   ├── token-storage.js     # Primary token store (Graph + Flow, mtime-aware)
+│   ├── token-storage-instance.js # Shared singleton wrapper
+│   ├── token-manager.js     # Function-based store used only by power-automate
+│   └── tools.js             # Auth-related tools (about, authenticate, check-auth-status)
 ├── calendar/                # Calendar functionality
 │   ├── index.js             # Calendar exports
 │   ├── list.js              # List events
@@ -33,7 +35,10 @@ A comprehensive MCP (Model Context Protocol) server that connects Claude with Mi
 │   ├── search.js            # Search emails
 │   ├── read.js              # Read email
 │   ├── send.js              # Send email
-│   └── mark-as-read.js      # Mark email read/unread
+│   ├── draft.js             # Create draft email
+│   ├── delete.js            # Delete email
+│   ├── mark-as-read.js      # Mark email read/unread
+│   └── folder-utils.js      # Folder name/path resolution helpers
 ├── folder/                  # Folder functionality
 │   ├── index.js             # Folder exports
 │   ├── list.js              # List folders
@@ -63,6 +68,7 @@ A comprehensive MCP (Model Context Protocol) server that connects Claude with Mi
 └── utils/                   # Utility functions
     ├── graph-api.js         # Microsoft Graph API helper
     ├── odata-helpers.js     # OData query building
+    ├── html-sanitizer.js    # HTML sanitizer (DOM tree walk)
     └── mock-data.js         # Test mode data
 ```
 
@@ -78,6 +84,13 @@ A comprehensive MCP (Model Context Protocol) server that connects Claude with Mi
 
 ## Available Tools
 
+### Auth
+| Tool | Description |
+|------|-------------|
+| `about` | Show server info and supported tools |
+| `authenticate` | Get OAuth URL to sign in |
+| `check-auth-status` | Show current token state (auto-refreshes if needed) |
+
 ### Outlook (Email & Calendar)
 | Tool | Description |
 |------|-------------|
@@ -85,17 +98,21 @@ A comprehensive MCP (Model Context Protocol) server that connects Claude with Mi
 | `search-emails` | Search emails with filters |
 | `read-email` | Read email content |
 | `send-email` | Send a new email |
+| `draft-email` | Create a draft email |
+| `delete-email` | Delete an email |
 | `mark-as-read` | Mark email as read/unread |
 | `list-events` | List calendar events |
 | `create-event` | Create calendar event |
 | `accept-event` | Accept event invitation |
 | `decline-event` | Decline event invitation |
+| `cancel-event` | Cancel an event you organized |
 | `delete-event` | Delete calendar event |
 | `list-folders` | List mail folders (recursive, any depth) |
 | `create-folder` | Create mail folder |
 | `move-emails` | Move emails between folders |
 | `list-rules` | List inbox rules |
 | `create-rule` | Create inbox rule |
+| `edit-rule-sequence` | Change execution order of an inbox rule |
 
 > **Folder paths:** `list-emails`, `search-emails`, `move-emails`, `create-folder` and `create-rule` accept nested-folder paths via `'Parent/Child/Grandchild'` syntax (e.g. `Inbox/Projects/HelloCity`). The first segment may be a well-known name (`Inbox`, `Drafts`, `Sent`, `Deleted`, `Junk`, `Archive`). Leading/trailing/double slashes and surrounding whitespace are tolerated. Folder names containing `/` cannot be addressed via path syntax — use a single-segment lookup.
 
